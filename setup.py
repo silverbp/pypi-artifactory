@@ -4,7 +4,7 @@ Setup.py
 
 from setuptools import setup
 
-setup(name='silverbp_artifactory',
+setup(name='silverbp-artifactory',
       version='0.1',
       description='Python API for interacting with Artifactory',
       url='https://github.com/silverbp/pypi-artifactory',
