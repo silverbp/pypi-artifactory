@@ -5,6 +5,8 @@ import logging
 import re
 import hashlib
 from collections import namedtuple
+import zipfile
+import os
 
 import requests
 
@@ -116,8 +118,8 @@ class Api(object):
             artifact.repo, int(artifact.remote))
 
         if artifact.version:
-            latest_version_url = "{0}&v={1}".format(latest_version_url,
-                                                    artifact.version)
+            latest_version_url = "{0}&v={1}*".format(latest_version_url,
+                                                     artifact.version)
 
         response = requests.get(latest_version_url, headers=self._headers)
         return ApiReturn(response.status_code, response.text)
@@ -183,10 +185,30 @@ class Api(object):
 
         headers = {
             'X-JFrog-Art-Api': self._api_key,
-            'X-Checksum-Deploy': 'true',
             'X-Checksum-Sha1': file_hash.sha1,
             'X-Checksum-MD5': file_hash.md5
         }
 
         response = requests.put(artifact.get_path(self._base_url), data=open(src, 'rb'), headers=headers)
         return ApiReturn(response.status_code, response.json())
+
+    def copy_artifact(self, artifact, dest_repo):
+        to_url_part = "/{0}/{1}/{2}/{2}.{3}.{4}".format(artifact.repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
+        from_url_part = '{0}/copy/{1}/{2}/{3}/{3}.{4}.{5}'.format(self._api_url, artifact.repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
+
+        copy_url = from_url_part + '?to=' + to_url_part
+
+        response = requests.post(copy_url, headers=self._headers)
+        return ApiReturn(response.status_code, response.json())
+
+    def make_zipfile(self, output_filename, source_dir):
+        relroot = os.path.abspath(source_dir)
+        with zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED) as zip:
+            for root, dirs, files in os.walk(source_dir):
+                if root != source_dir:
+                    zip.write(root, os.path.relpath(root, relroot))
+                for file in files:
+                    filename = os.path.join(root, file)
+                    if os.path.isfile(filename): # regular files only
+                        arcname = os.path.join(os.path.relpath(root, relroot), file)
+                        zip.write(filename, arcname)
