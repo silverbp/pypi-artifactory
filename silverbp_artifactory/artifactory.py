@@ -2,9 +2,11 @@
 Artifactory API
 """
 import logging
+import json
 import re
 import hashlib
 from collections import namedtuple
+from datetime import datetime
 import zipfile
 import os
 
@@ -191,6 +193,17 @@ class Api(object):
 
         response = requests.put(artifact.get_path(self._base_url), data=open(src, 'rb'), headers=headers)
         return ApiReturn(response.status_code, response.json())
+
+    def get_artifacts_since(self, repo, since):
+        assert isinstance(since, datetime)
+        body = {"$and": []}
+        body['$and'].append({"repo": {"$eq":"{0}".format(repo)}})
+        body['$and'].append({"modified":{"$gt":"{0}".format(since.isoformat())}})
+        aql_url = "{0}/search/aql".format(self._api_url)
+        response = requests.post(aql_url, data="items.find({0})".format(json.dumps(body)), headers=self._headers)
+        if response.status_code == 200:
+            return ApiReturn(response.status_code, response.json())
+        return ApiReturn(response.status_code, response.text)
 
     def copy_artifact(self, artifact, dest_repo):
         to_url_part = "/{0}/{1}/{2}/{2}.{3}.{4}".format(artifact.repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
