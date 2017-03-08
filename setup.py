@@ -4,12 +4,12 @@ Setup.py
 
 from setuptools import setup
 
-setup(name='silverbp-artifactory',
+setup(name='silverbp-jfrog',
       version='0.2.3',
-      description='Python API for interacting with Artifactory',
-      url='https://github.com/silverbp/pypi-artifactory',
+      description='Python API for interacting with JFrog Apis',
+      url='https://github.com/silverbp/pypi-jfrog',
       author='Silver Blueprints LLC',
       author_email='admin@silverblueprints.com',
       license='MIT',
-      packages=['silverbp_artifactory'],
+      packages=['silverbp_jfrog'],
       zip_safe=False)
