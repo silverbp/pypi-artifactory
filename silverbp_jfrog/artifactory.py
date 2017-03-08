@@ -103,6 +103,11 @@ class Artifact(object):
 
         return self._artifact_id + '.' + self._version + '.' + self._extension
 
+    def __str__(self):
+        if self.version:
+            return '{0}.{1}'.format(self.artifact_id, self.version)
+        return self.artifact_id
+
 class Api(object):
     def __init__(self, base_url, api_key, logger=None):
         self._base_url = base_url.strip('/')
