@@ -12,7 +12,7 @@ import os
 
 import requests
 
-ApiReturn = namedtuple('ApiReturn', 'status_code response')
+ApiReturn = namedtuple('ApiReturn', 'status_code data')
 
 HashReturn = namedtuple('HashReturn', 'md5 sha1')
 
