@@ -104,6 +104,9 @@ class Artifact(object):
         return self._artifact_id + '.' + self._version + '.' + self._extension
 
     def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
         if self.version:
             return '{0}.{1}'.format(self.artifact_id, self.version)
         return self.artifact_id
@@ -154,9 +157,9 @@ class Api(object):
             semver_regex = r"\d+\.\d+(\.\d+)?(\.\d+)?\+\d+g[0-9a-f]{7}"
             semver_regex_match = re.search(semver_regex, nuget_description)
             if semver_regex_match:
-                properties['sem_version'] = semver_regex_match.group()
+                properties['nuget.sem_version'] = semver_regex_match.group()
             else:
-                properties['sem_version'] = artifact.version
+                properties['nuget.sem_version'] = artifact.version
 
         return ApiReturn(response.status_code, json_response)
 
@@ -215,7 +218,7 @@ class Api(object):
         return ApiReturn(response.status_code, response.text)
 
     def copy_artifact(self, artifact, dest_repo):
-        to_url_part = "/{0}/{1}/{2}/{2}.{3}.{4}".format(artifact.repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
+        to_url_part = "/{0}/{1}/{2}/{2}.{3}.{4}".format(dest_repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
         from_url_part = '{0}/copy/{1}/{2}/{3}/{3}.{4}.{5}'.format(self._api_url, artifact.repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
 
         copy_url = from_url_part + '?to=' + to_url_part

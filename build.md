@@ -5,4 +5,4 @@ twine upload dist/*
 
 #### local dev
 
-pip install -e ~/code/silverbp/pypi-artifactory --no-use-wheel
+pip install -e ~/code/silverbp/pypi-jfrog --no-use-wheel
