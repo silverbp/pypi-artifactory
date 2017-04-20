@@ -149,6 +149,10 @@ class Api(object):
         response = requests.get(metadata_url, headers=self._headers)
 
         json_response = response.json()
+
+        if 'properties' not in json_response:
+            return ApiReturn(response.status_code, json_response)
+
         properties = json_response['properties']
 
         # if this is a nuget package, see if there's a semvar version encoded in the description
