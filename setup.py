@@ -5,7 +5,7 @@ Setup.py
 from setuptools import setup
 
 setup(name='silverbp-jfrog',
-      version='0.2.10',
+      version='0.3.5',
       description='Python API for interacting with JFrog Apis',
       url='https://github.com/silverbp/pypi-jfrog',
       author='Silver Blueprints LLC',
