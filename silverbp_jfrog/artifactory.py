@@ -21,14 +21,21 @@ class ArtifactApiError(Exception):
         super(ArtifactApiError, self).__init__(message)
 
 class Artifact(object):
-    def __init__(self, artifact_id, group_id, repo, extension=None):
+    def __init__(self, artifact_id, group_id, repo, extension=None, id_version_seperator=None):
         self._artifact_id = artifact_id
         self._repo = repo
         self._version = None
         self._remote = True
         self._group_id = group_id
+        self._id_version_seperator = id_version_seperator
         self._extension = extension or ''
         self._subpath = ''
+        if id_version_seperator:
+            self._id_version_seperator = id_version_seperator
+        elif extension == 'nupkg'
+            self._id_version_seperator = '.'
+        else:
+            self._id_version_seperator = '-'
 
     @property
     def version(self):
@@ -42,25 +49,13 @@ class Artifact(object):
     def artifact_id(self):
         return self._artifact_id
 
-    @artifact_id.setter
-    def artifact_id(self, artifact_id):
-        self._artifact_id = artifact_id
-
     @property
     def repo(self):
         return self._repo
 
-    @repo.setter
-    def repo(self, repo):
-        self._repo = repo
-
     @property
     def remote(self):
         return self._remote
-
-    @remote.setter
-    def remote(self, remote):
-        self._remote = remote
 
     @property
     def group_id(self):
@@ -86,12 +81,20 @@ class Artifact(object):
     def subpath(self, subpath):
         self._subpath = subpath
 
-    def get_path(self, base_url):
+    @property
+    def version_separator(self):
+        return self._version_separator
+
+    @subpath.setter
+    def version_separator(self, version_separator):
+        self._version_separator = version_separator
+
+    def get_url(self, base_url):
         if not self.version or not self.extension:
             raise ArtifactApiError('version and extension must be specified to get the path')
 
-        path = "{0}/{1}/{2}/{3}/{3}.{4}.{5}".format(
-            base_url, self.repo, self.group_id, self.artifact_id, self.version, self.extension)
+        path = "{0}/{1}/{2}/{3}/{3}{4}{5}.{6}".format(
+            base_url, self.repo, self.group_id, self.artifact_id, self.version_separator, self.version, self.extension)
         if self.subpath:
             path = path + '!/' + self.subpath
         return path
@@ -140,8 +143,7 @@ class Api(object):
         if not isinstance(artifact, Artifact):
             raise ArtifactApiError('The artifact parameter must be of type Artifact')
 
-        metadata_url = "{0}/storage/{1}/{2}/{3}/{3}.{4}.{5}?properties".format(
-            self._api_url, artifact.repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
+        metadata_url = '{0}?properties'.format(artifact.get_url('{0}/storage'.format(self._api_url)))
         response = requests.get(metadata_url, headers=self._headers)
 
         json_response = response.json()
@@ -167,7 +169,7 @@ class Api(object):
         if not isinstance(artifact, Artifact):
             raise ArtifactApiError('The artifact parameter must be of type Artifact')
 
-        response = requests.get(artifact.get_path(self._base_url), headers=self._headers)
+        response = requests.get(artifact.get_url(self._base_url), headers=self._headers)
 
         if response.status_code != 200:
             return ApiReturn(response.status_code, response.text)
@@ -199,7 +201,7 @@ class Api(object):
             'X-Checksum-MD5': file_hash.md5
         }
 
-        response = requests.put(artifact.get_path(self._base_url), data=open(src, 'rb'), headers=headers)
+        response = requests.put(artifact.get_url(self._base_url), data=open(src, 'rb'), headers=headers)
         return ApiReturn(response.status_code, response.json())
 
     def get_artifacts_since(self, repo, since, additional_props=None):
@@ -218,8 +220,8 @@ class Api(object):
         return ApiReturn(response.status_code, response.text)
 
     def copy_artifact(self, artifact, dest_repo):
-        to_url_part = "/{0}/{1}/{2}/{2}.{3}.{4}".format(dest_repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
-        from_url_part = '{0}/copy/{1}/{2}/{3}/{3}.{4}.{5}'.format(self._api_url, artifact.repo, artifact.group_id, artifact.artifact_id, artifact.version, artifact.extension)
+        to_url_part = "/{0}/{1}/{2}/{2}{3}{4}.{5}".format(dest_repo, artifact.group_id, artifact.artifact_id, artifact.version_separator, artifact.version, artifact.extension)
+        from_url_part = artifact.get_url('{0}/copy'.format(self._api_url))
 
         copy_url = from_url_part + '?to=' + to_url_part
 
