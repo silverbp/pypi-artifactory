@@ -219,7 +219,8 @@ class Api(object):
         return ApiReturn(response.status_code, response.text)
 
     def copy_artifact(self, artifact, dest_repo):
-        to_url_part = "/{0}/{1}/{2}/{2}{3}{4}.{5}".format(dest_repo, artifact.group_id, artifact.artifact_id, artifact.version_separator, artifact.version, artifact.extension)
+
+        to_url_part = "/{0}/{1}/{2}/{2}{3}{4}.{5}".format(dest_repo, artifact.group_id, artifact.artifact_id, artifact.version_separator, artifact.version.replace('+', '%2B'), artifact.extension)
         from_url_part = artifact.get_url('{0}/copy'.format(self._api_url))
 
         copy_url = from_url_part + '?to=' + to_url_part
