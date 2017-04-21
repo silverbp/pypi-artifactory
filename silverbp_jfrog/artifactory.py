@@ -21,21 +21,20 @@ class ArtifactApiError(Exception):
         super(ArtifactApiError, self).__init__(message)
 
 class Artifact(object):
-    def __init__(self, artifact_id, group_id, repo, extension=None, id_version_seperator=None):
+    def __init__(self, artifact_id, group_id, repo, extension=None, version_separator=None):
         self._artifact_id = artifact_id
         self._repo = repo
         self._version = None
         self._remote = True
         self._group_id = group_id
-        self._id_version_seperator = id_version_seperator
         self._extension = extension or ''
         self._subpath = ''
-        if id_version_seperator:
-            self._id_version_seperator = id_version_seperator
-        elif extension == 'nupkg'
-            self._id_version_seperator = '.'
+        if version_separator:
+            self._version_separator = version_separator
+        elif extension == 'nupkg':
+            self._version_separator = '.'
         else:
-            self._id_version_seperator = '-'
+            self._version_separator = '-'
 
     @property
     def version(self):
@@ -85,7 +84,7 @@ class Artifact(object):
     def version_separator(self):
         return self._version_separator
 
-    @subpath.setter
+    @version_separator.setter
     def version_separator(self, version_separator):
         self._version_separator = version_separator
 
