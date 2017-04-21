@@ -123,13 +123,9 @@ class Api(object):
         if not isinstance(artifact, Artifact):
             raise ArtifactApiError('The artifact parameter must be of type Artifact')
 
-        latest_version_url = "{0}/search/latestVersion?g={1}&a={2}&repos={3}&remote={4}".format(
+        latest_version_url = "{0}/search/latestVersion?g={1}&a={2}&repos={3}&remote={4}&v={5}*".format(
             self._api_url, artifact.group_id, artifact.artifact_id,
-            artifact.repo, int(artifact.remote))
-
-        if artifact.version:
-            latest_version_url = "{0}&v={1}*".format(latest_version_url,
-                                                     artifact.version)
+            artifact.repo, int(artifact.remote), artifact.version or '')
 
         response = requests.get(latest_version_url, headers=self._headers)
         return ApiReturn(response.status_code, response.text)
