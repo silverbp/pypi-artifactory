@@ -93,7 +93,7 @@ class Artifact(object):
             raise ArtifactApiError('version and extension must be specified to get the path')
 
         path = "{0}/{1}/{2}/{3}/{3}{4}{5}.{6}".format(
-            base_url, self.repo, self.group_id, self.artifact_id, self.version_separator, self.version, self.extension)
+            base_url, self.repo, self.group_id, self.artifact_id, self.version_separator, self.version, self.extension).replace('+', '%2B')
         if self.subpath:
             path = path + '!/' + self.subpath
         return path
@@ -131,6 +131,27 @@ class Api(object):
 
         response = requests.get(latest_version_url, headers=self._headers)
         return ApiReturn(response.status_code, response.text)
+
+    def get_version_by_aql(self, artifact, version, version_property, aql_modier='$lt'):
+        aql_url = "{0}/search/aql".format(self._api_url)
+
+        body = {"$and": []}
+        body['$and'].append({"repo": {"$eq":"{0}".format(artifact.repo)}})
+        body['$and'].append({version_property: {aql_modier: version}})
+        body['$and'].append({"path": {"$eq":"{0}/{1}".format(artifact.group_id, artifact.artifact_id)}})
+
+        sort = {"$desc": ["name"]}
+        body = 'items.find({0}).sort({1}).limit(1)'.format(json.dumps(body), json.dumps(sort))
+
+        response = requests.post(aql_url, data=body, headers=self._headers)
+        if response.status_code != 200:
+            return ApiReturn(response.status_code, response.text)
+
+        result = next(iter(response.json()['results']), None)
+        if not result:
+            return ApiReturn(response.status_code, None)
+
+        return result['name'].replace(artifact.artifact_id, '').replace(artifact.extension, '').strip(artifact.version_separator).strip('.')
 
     def search_artifacts(self, name, repos):
         search_url = "{0}/search/artifact?name={1}&repos={2}".format(
@@ -200,8 +221,16 @@ class Api(object):
             'X-Checksum-MD5': file_hash.md5
         }
 
+        url = artifact.get_url(self._base_url)
+        print url
         response = requests.put(artifact.get_url(self._base_url), data=open(src, 'rb'), headers=headers)
         return ApiReturn(response.status_code, response.json())
+
+    def publish_properties(self, artifact, **kwargs):
+        properties = ['{0}={1}'.format(x, y.replace('+', '%2B')) for x, y in kwargs.iteritems()]
+        url = '{0}?properties={1}'.format(artifact.get_url(self._api_url + '/storage'), ';'.join(properties))
+        response = requests.put(url, headers=self._headers)
+        return  (response.status_code, None)
 
     def get_artifacts_since(self, repo, since, additional_props=None):
         assert isinstance(since, datetime)
@@ -219,7 +248,6 @@ class Api(object):
         return ApiReturn(response.status_code, response.text)
 
     def copy_artifact(self, artifact, dest_repo):
-
         to_url_part = "/{0}/{1}/{2}/{2}{3}{4}.{5}".format(dest_repo, artifact.group_id, artifact.artifact_id, artifact.version_separator, artifact.version.replace('+', '%2B'), artifact.extension)
         from_url_part = artifact.get_url('{0}/copy'.format(self._api_url))
 
