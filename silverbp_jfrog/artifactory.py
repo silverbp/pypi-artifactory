@@ -132,12 +132,12 @@ class Api(object):
         response = requests.get(latest_version_url, headers=self._headers)
         return ApiReturn(response.status_code, response.text)
 
-    def get_version_by_aql(self, artifact, version, version_property, aql_modier='$lt'):
+    def get_version_by_aql(self, artifact, version_property, aql_modier='$lt'):
         aql_url = "{0}/search/aql".format(self._api_url)
 
         body = {"$and": []}
         body['$and'].append({"repo": {"$eq":"{0}".format(artifact.repo)}})
-        body['$and'].append({version_property: {aql_modier: version}})
+        body['$and'].append({version_property: {aql_modier: artifact.version}})
         body['$and'].append({"path": {"$eq":"{0}/{1}".format(artifact.group_id, artifact.artifact_id)}})
 
         sort = {"$desc": ["name"]}
