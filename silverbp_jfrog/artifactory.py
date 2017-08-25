@@ -151,7 +151,8 @@ class Api(object):
         if not result:
             return ApiReturn(response.status_code, None)
 
-        return result['name'].replace(artifact.artifact_id, '').replace(artifact.extension, '').strip(artifact.version_separator).strip('.')
+        version = result['name'].replace(artifact.artifact_id, '').replace(artifact.extension, '').strip(artifact.version_separator).strip('.')
+        return ApiReturn(response.status_code, version)
 
     def search_artifacts(self, name, repos):
         search_url = "{0}/search/artifact?name={1}&repos={2}".format(
