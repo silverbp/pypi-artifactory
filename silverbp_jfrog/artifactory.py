@@ -149,7 +149,7 @@ class Api(object):
 
         result = next(iter(response.json()['results']), None)
         if not result:
-            return ApiReturn(response.status_code, None)
+            return ApiReturn(404, None)
 
         version = result['name'].replace(artifact.artifact_id, '').replace(artifact.extension, '').strip(artifact.version_separator).strip('.')
         return ApiReturn(response.status_code, version)
